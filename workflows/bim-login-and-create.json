@@ -1,0 +1,111 @@
+{
+  "name": "BIM Gateway Login and Create Project",
+  "description": "Complete workflow to login to BIM Gateway Service and create a new project",
+  "steps": [
+    {
+      "action": "open_page",
+      "arguments": {
+        "url": "https://bimgatewayservice-nitro.qe.bp-paas.otxlab.net/subscriptions/july1/home"
+      },
+      "description": "Open BIM Gateway Service",
+      "waitAfter": 2000
+    },
+    {
+      "action": "fill",
+      "arguments": {
+        "selector": "#otds_username",
+        "text": "rsil@opentext.com"
+      },
+      "description": "Fill username",
+      "waitAfter": 500
+    },
+    {
+      "action": "click",
+      "arguments": {
+        "selector": "#nextbutton"
+      },
+      "description": "Click Next button",
+      "waitAfter": 1000
+    },
+    {
+      "action": "wait_for_selector",
+      "arguments": {
+        "selector": "#otds_password",
+        "timeout": 30000
+      },
+      "description": "Wait for password field",
+      "waitAfter": 500
+    },
+    {
+      "action": "fill",
+      "arguments": {
+        "selector": "#otds_password",
+        "text": "Infinity@12345"
+      },
+      "description": "Fill password",
+      "waitAfter": 500
+    },
+    {
+      "action": "click",
+      "arguments": {
+        "selector": "#loginbutton"
+      },
+      "description": "Click Sign In button",
+      "waitAfter": 3000
+    },
+    {
+      "action": "screenshot",
+      "arguments": {},
+      "description": "Screenshot after login",
+      "waitAfter": 1000
+    },
+    {
+      "action": "click",
+      "arguments": {
+        "selector": "button.ot-icon-button"
+      },
+      "description": "Click home button",
+      "waitAfter": 2000
+    },
+    {
+      "action": "fill",
+      "arguments": {
+        "selector": "input[placeholder*='unique project reference']",
+        "text": "TEST-REF-{timestamp}"
+      },
+      "description": "Fill project reference code",
+      "waitAfter": 500
+    },
+    {
+      "action": "fill",
+      "arguments": {
+        "selector": "input[placeholder*='project name']",
+        "text": "Test Project {timestamp}"
+      },
+      "description": "Fill project name",
+      "waitAfter": 500
+    },
+    {
+      "action": "click",
+      "arguments": {
+        "selector": "button.ot-flat-button.grouped.first"
+      },
+      "description": "Click Next button (1st time)",
+      "waitAfter": 2000
+    },
+    {
+      "action": "click",
+      "arguments": {
+        "selector": "button.ot-flat-button.grouped.first"
+      },
+      "description": "Click Next button (2nd time)",
+      "waitAfter": 2000
+    },
+    {
+      "action": "screenshot",
+      "arguments": {},
+      "description": "Final screenshot",
+      "waitAfter": 0
+    }
+  ]
+}

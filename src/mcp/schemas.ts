@@ -118,4 +118,18 @@ export const toolSchemas: Record<string, MCPTool> = {
       required: [],
     },
   },
+  execute_workflow: {
+    name: "execute_workflow",
+    description: "Execute a predefined workflow from a file. Available workflows: 'bim-login-only' (login to BIM Gateway and screenshot), 'bim-login-and-create' (login and create a project). Workflows are located in the workflows/ directory.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        workflow: {
+          type: "string",
+          description: "Name of the workflow to execute (without .json extension). Available: 'bim-login-only', 'bim-login-and-create'",
+        },
+      },
+      required: ["workflow"],
+    },
+  },
 };

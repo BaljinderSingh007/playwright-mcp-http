@@ -11,7 +11,28 @@ class BrowserManager {
     let session = this.sessions.get(sessionId);
 
     if (session) {
-      return session;
+      // Verify the session is still valid
+      try {
+        await session.page.evaluate(() => true);
+        return session;
+      } catch (error) {
+        // Session is invalid (browser was closed manually), remove it
+        console.log(`Session ${sessionId} is invalid (browser closed), creating new one`);
+        this.sessions.delete(sessionId);
+        this.browserInstance = null;
+      }
+    }
+
+    // Check if browser instance is still connected
+    if (this.browserInstance) {
+      try {
+        await this.browserInstance.version();
+      } catch (error) {
+        // Browser was closed manually, clear the instance
+        console.log("Browser instance is disconnected, creating new one");
+        this.browserInstance = null;
+        this.sessions.clear();
+      }
     }
 
     if (!this.browserInstance) {

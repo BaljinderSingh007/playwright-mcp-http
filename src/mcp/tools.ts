@@ -1,13 +1,18 @@
 import { browserManager } from "../playwright/browser";
 import { BrowserSession, ToolCallRequest, ToolCallResponse } from "../types";
 import { toolRegistry } from "./registry";
+import * as fs from "fs";
+import * as path from "path";
 
 export class ToolExecutor {
   async execute(request: ToolCallRequest): Promise<ToolCallResponse> {
+    // For execute_workflow, always generate a new session ID to avoid issues with manually closed browsers
     const sessionId =
-      request.sessionId ||
-      browserManager.getLastSessionId() ||
-      this.generateSessionId();
+      request.tool === "execute_workflow"
+        ? this.generateSessionId()
+        : request.sessionId ||
+          browserManager.getLastSessionId() ||
+          this.generateSessionId();
 
     try {
       const validation = toolRegistry.validateInput(
@@ -65,6 +70,12 @@ export class ToolExecutor {
           break;
         case "close_browser":
           result = await this.handleCloseBrowser(sessionId);
+          break;
+        case "execute_workflow":
+          result = await this.handleExecuteWorkflow(
+            sessionId,
+            request.arguments.workflow
+          );
           break;
         default:
           return {
@@ -285,6 +296,126 @@ export class ToolExecutor {
     await browserManager.closeSession(sessionId);
 
     return { message: `Session ${sessionId} closed`, sessionId };
+  }
+
+  private async handleExecuteWorkflow(
+    sessionId: string,
+    workflowName: string
+  ): Promise<{ 
+    message: string; 
+    stepsExecuted: number; 
+    results: any[]; 
+    sessionId: string 
+  }> {
+    if (!workflowName || typeof workflowName !== "string") {
+      throw new Error("Workflow name must be a non-empty string");
+    }
+
+    // Load workflow file
+    const workflowPath = path.join(__dirname, "../../workflows", `${workflowName}.json`);
+    
+    if (!fs.existsSync(workflowPath)) {
+      throw new Error(`Workflow "${workflowName}" not found. Available workflows: bim-login-only, bim-login-and-create`);
+    }
+
+    console.log(`[${sessionId}] Loading workflow from: ${workflowPath}`);
+    const workflowContent = fs.readFileSync(workflowPath, "utf-8");
+    const workflow = JSON.parse(workflowContent);
+
+    console.log(`[${sessionId}] Executing workflow: ${workflow.name}`);
+    console.log(`[${sessionId}] Description: ${workflow.description}`);
+    console.log(`[${sessionId}] Total steps: ${workflow.steps.length}`);
+
+    const results: any[] = [];
+    let session = await browserManager.getOrCreateSession(sessionId);
+
+    for (let i = 0; i < workflow.steps.length; i++) {
+      const step = workflow.steps[i];
+      console.log(`[${sessionId}] Step ${i + 1}/${workflow.steps.length}: ${step.description}`);
+
+      try {
+        // Replace {timestamp} placeholder in text fields
+        const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, -5);
+        if (step.arguments.text) {
+          step.arguments.text = step.arguments.text.replace('{timestamp}', timestamp);
+        }
+
+        let stepResult: any;
+        
+        // Execute the step based on action type
+        switch (step.action) {
+          case "open_page":
+            await session.page.goto(step.arguments.url, { 
+              waitUntil: "networkidle", 
+              timeout: 60000 
+            });
+            stepResult = { url: session.page.url(), title: await session.page.title() };
+            break;
+          
+          case "click":
+            await session.page.click(step.arguments.selector);
+            stepResult = { clicked: step.arguments.selector };
+            break;
+          
+          case "fill":
+            await session.page.fill(step.arguments.selector, step.arguments.text);
+            stepResult = { filled: step.arguments.selector, text: step.arguments.text };
+            break;
+          
+          case "wait_for_selector":
+            const timeout = step.arguments.timeout || 30000;
+            await session.page.waitForSelector(step.arguments.selector, { timeout });
+            stepResult = { appeared: step.arguments.selector };
+            break;
+          
+          case "screenshot":
+            const buffer = await session.page.screenshot();
+            const base64 = buffer.toString("base64");
+            stepResult = { screenshot: `${base64.substring(0, 50)}... (${base64.length} chars)` };
+            break;
+          
+          default:
+            throw new Error(`Unknown action: ${step.action}`);
+        }
+
+        results.push({
+          step: i + 1,
+          action: step.action,
+          description: step.description,
+          success: true,
+          result: stepResult
+        });
+
+        // Wait after step if specified
+        if (step.waitAfter && step.waitAfter > 0) {
+          console.log(`[${sessionId}] Waiting ${step.waitAfter}ms...`);
+          await new Promise(resolve => setTimeout(resolve, step.waitAfter));
+        }
+
+      } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : String(error);
+        console.error(`[${sessionId}] Step ${i + 1} failed: ${errorMessage}`);
+        
+        results.push({
+          step: i + 1,
+          action: step.action,
+          description: step.description,
+          success: false,
+          error: errorMessage
+        });
+
+        throw new Error(`Workflow failed at step ${i + 1} (${step.description}): ${errorMessage}`);
+      }
+    }
+
+    console.log(`[${sessionId}] Workflow completed successfully`);
+
+    return {
+      message: `Workflow "${workflow.name}" completed successfully. Executed ${workflow.steps.length} steps.`,
+      stepsExecuted: workflow.steps.length,
+      results,
+      sessionId
+    };
   }
 
   private generateSessionId(): string {

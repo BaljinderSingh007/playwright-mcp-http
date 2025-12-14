@@ -213,7 +213,7 @@ export class ToolExecutor {
       session = await browserManager.getOrCreateSession(sessionId);
     }
 
-    const waitTimeout = timeout || 30000;
+    const waitTimeout = timeout || 60000;
     console.log(
       `[${sessionId}] Waiting for selector "${selector}" (timeout: ${waitTimeout}ms)`
     );
@@ -264,7 +264,7 @@ export class ToolExecutor {
       session = await browserManager.getOrCreateSession(sessionId);
     }
 
-    const waitTimeout = timeout || 30000;
+    const waitTimeout = timeout || 60000;
 
     console.log(`[${sessionId}] Filling selector "${selector}" with text`);
     await session.page.fill(selector, text);
@@ -360,7 +360,7 @@ export class ToolExecutor {
 
     const results: any[] = [];
     let session = await browserManager.getOrCreateSession(sessionId);
-    const GLOBAL_TIMEOUT = 30000; // 30 seconds global timeout
+    const GLOBAL_TIMEOUT = 60000; // 60 seconds global timeout
 
     for (let i = 0; i < workflow.steps.length; i++) {
       const step = workflow.steps[i];
@@ -399,6 +399,14 @@ export class ToolExecutor {
             case "fill":
               await session.page.fill(step.arguments.selector, step.arguments.text, { timeout: GLOBAL_TIMEOUT });
               return { filled: step.arguments.selector, text: step.arguments.text };
+            
+            case "focus":
+              await session.page.focus(step.arguments.selector);
+              return { focused: step.arguments.selector };
+            
+            case "type":
+              await session.page.type(step.arguments.selector, step.arguments.text, { delay: step.arguments.delay || 0 });
+              return { typed: step.arguments.selector, text: step.arguments.text };
             
             case "wait_for_selector":
               const timeout = Math.min(step.arguments.timeout || 30000, GLOBAL_TIMEOUT);
@@ -475,7 +483,7 @@ export class ToolExecutor {
         stepResult = await Promise.race([
           stepPromise,
           new Promise((_, reject) => 
-            setTimeout(() => reject(new Error(`STEP TIMEOUT: Operation exceeded 30 seconds - ${step.action} on ${step.arguments.selector || 'N/A'}`)), GLOBAL_TIMEOUT)
+            setTimeout(() => reject(new Error(`STEP TIMEOUT: Operation exceeded 60 seconds - ${step.action} on ${step.arguments.selector || 'N/A'}`)), GLOBAL_TIMEOUT)
           )
         ]);
 

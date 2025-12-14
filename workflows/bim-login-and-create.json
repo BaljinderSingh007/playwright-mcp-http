@@ -52,7 +52,7 @@
       "action": "wait_for_selector",
       "arguments": {
         "selector": "#otds_password",
-        "timeout": 30000
+        "timeout": 60000
       }
     },
     {
@@ -73,21 +73,13 @@
       "action": "wait_for_selector",
       "arguments": {
         "selector": "#add-project",
-        "timeout": 30000
+        "timeout": 60000
       }
     },
     {
       "action": "click",
       "arguments": {
         "selector": "#add-project"
-      }
-    },
-
-    {
-      "action": "wait_for_network",
-      "arguments": {
-        "url": "newProjectDetailsTemplate.json",
-        "timeout": 30000
       }
     },
     {
@@ -118,7 +110,7 @@
       "arguments": {
         "selector": "input[placeholder*='project name']",
         "state": "visible",
-        "timeout": 30000
+        "timeout": 60000
       }
     },
     {
@@ -141,7 +133,7 @@
       "action": "wait_for_network",
       "arguments": {
         "url": "projectOptions.json",
-        "timeout": 30000
+        "timeout": 60000
       }
     },
 
@@ -150,7 +142,7 @@
       "arguments": {
         "selector": "input[type='radio'][id='allow']",
         "state": "visible",
-        "timeout": 30000
+        "timeout": 60000
       }
     },
     {
@@ -171,7 +163,7 @@
       "action": "wait_for_network",
       "arguments": {
         "url": "organizationDetails.json",
-        "timeout": 45000
+        "timeout": 60000
       }
     },
 
@@ -204,7 +196,7 @@
       "action": "wait_for_enabled",
       "arguments": {
         "selector": ".dropdown-toggle",
-        "timeout": 30000
+        "timeout": 60000
       }
     },
     {

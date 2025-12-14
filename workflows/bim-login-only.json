@@ -1,63 +1,76 @@
 {
-  "name": "BIM Gateway Login Only",
-  "description": "Login to BIM Gateway Service and take a screenshot",
+  "name": "BIM Gateway Login and Create Project",
+  "description": "Login and create project with random values",
+  "failurePolicy": {
+    "onTimeout": "STOP_AND_FAIL",
+    "onSelectorNotFound": "STOP_AND_FAIL",
+    "onNetworkError": "STOP_AND_FAIL"
+  },
+  "preconditions": {
+    "generateRandomValues": true,
+    "randomValues": {
+      "RANDOM_PROJECT_REF": "PRJ-{randomNum}",
+      "RANDOM_PROJECT_NAME": "Auto Project {randomWord}",
+      "RANDOM_ORG_NAME": "Org {randomWord}",
+      "RANDOM_UNIQUE_CODE": "CODE-{randomNum}",
+      "RANDOM_DOMAIN": "auto{randomStr}.com"
+    }
+  },
   "steps": [
     {
-      "action": "open_page",
+  "action": "open_page",
+  "arguments": {
+    "url": "https://bimgatewayservice-nitro.qe.bp-paas.otxlab.net/subscriptions/july1/home",
+    "waitUntil": "domcontentloaded",
+    "timeout": 60000
+  },
+  "description": "Open BIM Gateway home page"
+},
+
+    {
+      "action": "wait_for_selector",
       "arguments": {
-        "url": "https://bimgatewayservice-nitro.qe.bp-paas.otxlab.net/subscriptions/july1/home"
-      },
-      "description": "Open BIM Gateway Service",
-      "waitAfter": 2000
+        "selector": "#otds_username",
+        "timeout": 60000
+      }
     },
     {
       "action": "fill",
       "arguments": {
         "selector": "#otds_username",
         "text": "rsil@opentext.com"
-      },
-      "description": "Fill username",
-      "waitAfter": 500
+      }
     },
     {
       "action": "click",
       "arguments": {
         "selector": "#nextbutton"
-      },
-      "description": "Click Next button",
-      "waitAfter": 1000
+      }
     },
+
     {
       "action": "wait_for_selector",
       "arguments": {
         "selector": "#otds_password",
-        "timeout": 30000
-      },
-      "description": "Wait for password field",
-      "waitAfter": 500
+        "timeout": 60000
+      }
     },
     {
       "action": "fill",
       "arguments": {
         "selector": "#otds_password",
         "text": "Infinity@12345"
-      },
-      "description": "Fill password",
-      "waitAfter": 500
+      }
     },
     {
       "action": "click",
       "arguments": {
         "selector": "#loginbutton"
-      },
-      "description": "Click Sign In button",
-      "waitAfter": 3000
+      }
     },
     {
       "action": "screenshot",
-      "arguments": {},
-      "description": "Screenshot after login",
-      "waitAfter": 0
+      "arguments": {}
     }
   ]
 }

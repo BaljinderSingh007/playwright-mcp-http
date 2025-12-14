@@ -47,6 +47,42 @@ export const toolSchemas: Record<string, MCPTool> = {
       required: ["selector", "text"],
     },
   },
+  focus: {
+    name: "focus",
+    description: "Focus on an element matching the selector",
+    inputSchema: {
+      type: "object",
+      properties: {
+        selector: {
+          type: "string",
+          description: "CSS selector of the element to focus",
+        },
+      },
+      required: ["selector"],
+    },
+  },
+  type: {
+    name: "type",
+    description: "Type text into an element character by character",
+    inputSchema: {
+      type: "object",
+      properties: {
+        selector: {
+          type: "string",
+          description: "CSS selector of the element to type into",
+        },
+        text: {
+          type: "string",
+          description: "Text to type",
+        },
+        delay: {
+          type: "number",
+          description: "Delay in milliseconds between keystrokes (default: 0)",
+        },
+      },
+      required: ["selector", "text"],
+    },
+  },
   wait_for_selector: {
     name: "wait_for_selector",
     description: "Wait for an element to appear on the page (up to 30 seconds)",
@@ -59,7 +95,7 @@ export const toolSchemas: Record<string, MCPTool> = {
         },
         timeout: {
           type: "number",
-          description: "Maximum time to wait in milliseconds (default: 30000)",
+          description: "Maximum time to wait in milliseconds (default: 60000)",
         },
       },
       required: ["selector"],
@@ -85,7 +121,7 @@ export const toolSchemas: Record<string, MCPTool> = {
         },
         timeout: {
           type: "number",
-          description: "Maximum time to wait in milliseconds (default: 30000)",
+          description: "Maximum time to wait in milliseconds (default: 60000)",
         },
       },
       required: ["selector", "text", "waitFor"],

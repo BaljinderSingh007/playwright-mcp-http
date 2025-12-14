@@ -5,6 +5,7 @@ class BrowserManager {
   private sessions: Map<string, BrowserSession> = new Map();
   private browserInstance: Browser | null = null;
   private sessionTimeout: number = 30 * 60 * 1000;
+  private lastSessionId: string | null = null;
 
   async getOrCreateSession(sessionId: string): Promise<BrowserSession> {
     let session = this.sessions.get(sessionId);
@@ -36,14 +37,23 @@ class BrowserManager {
     };
 
     this.sessions.set(sessionId, session);
+    this.lastSessionId = sessionId;
 
     this.scheduleSessionCleanup(sessionId);
 
     return session;
   }
 
-  getSession(sessionId: string): BrowserSession | undefined {
-    return this.sessions.get(sessionId);
+  getSession(sessionId: string | null): BrowserSession | undefined {
+    const actualSessionId = sessionId || this.lastSessionId;
+    if (!actualSessionId) {
+      return undefined;
+    }
+    return this.sessions.get(actualSessionId);
+  }
+
+  getLastSessionId(): string | null {
+    return this.lastSessionId;
   }
 
   async closeSession(sessionId: string): Promise<void> {

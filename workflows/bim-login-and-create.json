@@ -1,199 +1,235 @@
 {
   "name": "BIM Gateway Login and Create Project",
-  "description": "Complete workflow to login to BIM Gateway Service and create a new project",
+  "description": "Login and create project with random values",
+  "failurePolicy": {
+    "onTimeout": "STOP_AND_FAIL",
+    "onSelectorNotFound": "STOP_AND_FAIL",
+    "onNetworkError": "STOP_AND_FAIL"
+  },
+  "preconditions": {
+    "generateRandomValues": true,
+    "randomValues": {
+      "RANDOM_PROJECT_REF": "PRJ-{randomNum}",
+      "RANDOM_PROJECT_NAME": "Auto Project {randomWord}",
+      "RANDOM_ORG_NAME": "Org {randomWord}",
+      "RANDOM_UNIQUE_CODE": "CODE-{randomNum}",
+      "RANDOM_DOMAIN": "auto{randomStr}.com"
+    }
+  },
   "steps": [
     {
-      "action": "open_page",
+  "action": "open_page",
+  "arguments": {
+    "url": "https://bimgatewayservice-nitro.qe.bp-paas.otxlab.net/subscriptions/july1/home",
+    "waitUntil": "domcontentloaded",
+    "timeout": 60000
+  },
+  "description": "Open BIM Gateway home page"
+},
+
+    {
+      "action": "wait_for_selector",
       "arguments": {
-        "url": "https://bimgatewayservice-nitro.qe.bp-paas.otxlab.net/subscriptions/july1/home"
-      },
-      "description": "Open BIM Gateway Service",
-      "waitAfter": 2000
+        "selector": "#otds_username",
+        "timeout": 60000
+      }
     },
     {
       "action": "fill",
       "arguments": {
         "selector": "#otds_username",
         "text": "rsil@opentext.com"
-      },
-      "description": "Fill username",
-      "waitAfter": 500
+      }
     },
     {
       "action": "click",
       "arguments": {
         "selector": "#nextbutton"
-      },
-      "description": "Click Next button",
-      "waitAfter": 1000
+      }
     },
+
     {
       "action": "wait_for_selector",
       "arguments": {
         "selector": "#otds_password",
         "timeout": 30000
-      },
-      "description": "Wait for password field",
-      "waitAfter": 500
+      }
     },
     {
       "action": "fill",
       "arguments": {
         "selector": "#otds_password",
         "text": "Infinity@12345"
-      },
-      "description": "Fill password",
-      "waitAfter": 500
+      }
     },
     {
       "action": "click",
       "arguments": {
         "selector": "#loginbutton"
-      },
-      "description": "Click Sign In button",
-      "waitAfter": 3000
+      }
     },
+
     {
-      "action": "screenshot",
-      "arguments": {},
-      "description": "Screenshot after login",
-      "waitAfter": 1000
+      "action": "wait_for_selector",
+      "arguments": {
+        "selector": "#add-project",
+        "timeout": 30000
+      }
     },
     {
       "action": "click",
       "arguments": {
         "selector": "#add-project"
-      },
-      "description": "Click add project button",
-      "waitAfter": 10000
+      }
     },
+
     {
-      "action": "fill",
+      "action": "wait_for_network",
       "arguments": {
-        "selector": "input[placeholder*='unique project reference']",
-        "text": "TEST123"
-      },
-      "description": "Fill project reference code",
-      "waitAfter": 500
+        "url": "newProjectDetailsTemplate.json",
+        "timeout": 30000
+      }
     },
     {
-      "action": "fill",
+      "action": "wait_for_selector",
+      "arguments": {
+        "selector": "#projectCode",
+        "state": "visible",
+        "timeout": 30000
+      }
+    },
+    {
+      "action": "focus",
+      "arguments": {
+        "selector": "#projectCode"
+      }
+    },
+    {
+      "action": "type",
+      "arguments": {
+        "selector": "#projectCode",
+        "text": "{RANDOM_PROJECT_REF}",
+        "delay": 40
+      }
+    },
+
+    {
+      "action": "wait_for_selector",
       "arguments": {
         "selector": "input[placeholder*='project name']",
-        "text": "Test Project"
-      },
-      "description": "Fill project name",
-      "waitAfter": 500
+        "state": "visible",
+        "timeout": 30000
+      }
+    },
+    {
+      "action": "type",
+      "arguments": {
+        "selector": "input[placeholder*='project name']",
+        "text": "{RANDOM_PROJECT_NAME}",
+        "delay": 40
+      }
+    },
+
+    {
+      "action": "click",
+      "arguments": {
+        "selector": "#contractNext"
+      }
+    },
+
+    {
+      "action": "wait_for_network",
+      "arguments": {
+        "url": "projectOptions.json",
+        "timeout": 30000
+      }
+    },
+
+    {
+      "action": "wait_for_selector",
+      "arguments": {
+        "selector": "input[type='radio'][id='allow']",
+        "state": "visible",
+        "timeout": 30000
+      }
     },
     {
       "action": "click",
       "arguments": {
-        "selector": "button.ot-flat-button.grouped.first"
-      },
-      "description": "Click Next button (1st time)",
-      "waitAfter": 2000
+        "selector": "input[type='radio'][id='allow']"
+      }
     },
+
     {
       "action": "click",
       "arguments": {
-        "selector": "button.ot-flat-button.grouped.first"
-      },
-      "description": "Click Next button (2nd time)",
-      "waitAfter": 2000
+        "selector": "#contractNext"
+      }
     },
+
     {
-      "action": "wait_for_selector",
+      "action": "wait_for_network",
+      "arguments": {
+        "url": "organizationDetails.json",
+        "timeout": 45000
+      }
+    },
+
+    {
+      "action": "type",
       "arguments": {
         "selector": "input[placeholder='Enter name']",
-        "timeout": 30000
-      },
-      "description": "Wait for Enter name field",
-      "waitAfter": 500
+        "text": "{RANDOM_ORG_NAME}",
+        "delay": 40
+      }
     },
     {
-      "action": "fill",
-      "arguments": {
-        "selector": "input[placeholder='Enter name']",
-        "text": "Test Name"
-      },
-      "description": "Fill name field",
-      "waitAfter": 500
-    },
-    {
-      "action": "wait_for_selector",
+      "action": "type",
       "arguments": {
         "selector": "input[placeholder='Enter an unique code']",
-        "timeout": 30000
-      },
-      "description": "Wait for unique code field",
-      "waitAfter": 500
+        "text": "{RANDOM_UNIQUE_CODE}",
+        "delay": 40
+      }
     },
     {
-      "action": "fill",
-      "arguments": {
-        "selector": "input[placeholder='Enter an unique code']",
-        "text": "CODE123"
-      },
-      "description": "Fill unique code field",
-      "waitAfter": 500
-    },
-    {
-      "action": "wait_for_selector",
+      "action": "type",
       "arguments": {
         "selector": "input[placeholder='Enter domain']",
-        "timeout": 30000
-      },
-      "description": "Wait for domain field",
-      "waitAfter": 500
+        "text": "{RANDOM_DOMAIN}",
+        "delay": 40
+      }
     },
-    {
-      "action": "fill",
-      "arguments": {
-        "selector": "input[placeholder='Enter domain']",
-        "text": "example.com"
-      },
-      "description": "Fill domain field",
-      "waitAfter": 1000
-    },
+
     {
       "action": "wait_for_enabled",
       "arguments": {
         "selector": ".dropdown-toggle",
         "timeout": 30000
-      },
-      "description": "Wait for dropdown to be enabled",
-      "waitAfter": 500
+      }
     },
     {
       "action": "click",
       "arguments": {
         "selector": ".dropdown-toggle"
-      },
-      "description": "Click dropdown button",
-      "waitAfter": 1000
-    },
-    {
-      "action": "wait_for_selector",
-      "arguments": {
-        "selector": ".dropdown-menu",
-        "timeout": 30000
-      },
-      "description": "Wait for dropdown menu to appear",
-      "waitAfter": 500
+      }
     },
     {
       "action": "click",
       "arguments": {
-        "selector": ".dropdown-menu a:has-text('Owner')"
-      },
-      "description": "Click Owner option from dropdown",
-      "waitAfter": 1000
+        "selector": ".dropdown-item:has-text('Owner')"
+      }
     },
+
+    {
+      "action": "click",
+      "arguments": {
+        "selector": "#contractAdd"
+      }
+    },
+
     {
       "action": "screenshot",
-      "arguments": {},
-      "description": "Final screenshot",
-      "waitAfter": 0
+      "arguments": {}
     }
   ]
 }

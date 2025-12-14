@@ -326,6 +326,38 @@ export class ToolExecutor {
     console.log(`[${sessionId}] Description: ${workflow.description}`);
     console.log(`[${sessionId}] Total steps: ${workflow.steps.length}`);
 
+    // Close all old sessions and focus on the new one
+    console.log(`[${sessionId}] Closing all previous sessions...`);
+    await browserManager.closeAllSessions();
+    console.log(`[${sessionId}] Previous sessions closed. Starting fresh workflow.`);
+
+    // Generate random values if preconditions exist
+    const randomValues: { [key: string]: string } = {};
+    if (workflow.preconditions?.generateRandomValues) {
+      console.log(`[${sessionId}] Generating random values...`);
+      for (const [key, template] of Object.entries(workflow.preconditions.randomValues || {})) {
+        const templateStr = template as string;
+        let value = templateStr;
+        
+        // Replace placeholders
+        if (templateStr.includes('{randomNum}')) {
+          value = value.replace('{randomNum}', Math.floor(Math.random() * 1000000).toString().padStart(6, '0'));
+        }
+        if (templateStr.includes('{randomWord}')) {
+          const words = ['Alpha', 'Beta', 'Gamma', 'Delta', 'Epsilon', 'Zeta', 'Eta', 'Theta'];
+          value = value.replace('{randomWord}', words[Math.floor(Math.random() * words.length)]);
+        }
+        if (templateStr.includes('{randomStr}')) {
+          const chars = 'abcdefghijklmnopqrstuvwxyz';
+          const str = Array.from({ length: 5 }, () => chars[Math.floor(Math.random() * chars.length)]).join('');
+          value = value.replace('{randomStr}', str);
+        }
+        
+        randomValues[key] = value;
+        console.log(`[${sessionId}] ${key}: ${value}`);
+      }
+    }
+
     const results: any[] = [];
     let session = await browserManager.getOrCreateSession(sessionId);
     const GLOBAL_TIMEOUT = 30000; // 30 seconds global timeout
@@ -340,6 +372,11 @@ export class ToolExecutor {
         const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, -5);
         if (step.arguments.text) {
           step.arguments.text = step.arguments.text.replace('{timestamp}', timestamp);
+          
+          // Replace random value placeholders
+          for (const [key, value] of Object.entries(randomValues)) {
+            step.arguments.text = step.arguments.text.replace(`{${key}}`, value);
+          }
         }
 
         let stepResult: any;
@@ -390,6 +427,39 @@ export class ToolExecutor {
                 await new Promise(r => setTimeout(r, checkInterval));
               }
               throw new Error(`Element ${selector} did not become enabled within ${waitTimeout}ms`);
+            
+            case "wait_for_network":
+              const networkTimeout = Math.min(step.arguments.timeout || 30000, GLOBAL_TIMEOUT);
+              const networkUrl = step.arguments.url;
+              const networkCheckInterval = 200;
+              const networkStartTime = Date.now();
+              
+              console.log(`[${sessionId}] Waiting for network response: ${networkUrl}`);
+              
+              // Set up request listener
+              let requestFound = false;
+              const requestHandler = (request: any) => {
+                if (request.url().includes(networkUrl)) {
+                  requestFound = true;
+                  console.log(`[${sessionId}] Network request intercepted: ${networkUrl}`);
+                }
+              };
+              
+              session.page.on('request', requestHandler);
+              
+              try {
+                while (Date.now() - networkStartTime < networkTimeout && !requestFound) {
+                  await new Promise(r => setTimeout(r, networkCheckInterval));
+                }
+                
+                if (!requestFound) {
+                  throw new Error(`Network response not received: ${networkUrl}`);
+                }
+                
+                return { networkResponse: networkUrl };
+              } finally {
+                session.page.removeListener('request', requestHandler);
+              }
             
             case "screenshot":
               const buffer = await session.page.screenshot();

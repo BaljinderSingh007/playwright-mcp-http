@@ -328,11 +328,13 @@ export class ToolExecutor {
 
     const results: any[] = [];
     let session = await browserManager.getOrCreateSession(sessionId);
+    const GLOBAL_TIMEOUT = 30000; // 30 seconds global timeout
 
     for (let i = 0; i < workflow.steps.length; i++) {
       const step = workflow.steps[i];
       console.log(`[${sessionId}] Step ${i + 1}/${workflow.steps.length}: ${step.description}`);
 
+      let stepStartTime = 0;
       try {
         // Replace {timestamp} placeholder in text fields
         const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, -5);
@@ -341,49 +343,82 @@ export class ToolExecutor {
         }
 
         let stepResult: any;
+        stepStartTime = Date.now();
         
-        // Execute the step based on action type
-        switch (step.action) {
-          case "open_page":
-            await session.page.goto(step.arguments.url, { 
-              waitUntil: "networkidle", 
-              timeout: 60000 
-            });
-            stepResult = { url: session.page.url(), title: await session.page.title() };
-            break;
-          
-          case "click":
-            await session.page.click(step.arguments.selector);
-            stepResult = { clicked: step.arguments.selector };
-            break;
-          
-          case "fill":
-            await session.page.fill(step.arguments.selector, step.arguments.text);
-            stepResult = { filled: step.arguments.selector, text: step.arguments.text };
-            break;
-          
-          case "wait_for_selector":
-            const timeout = step.arguments.timeout || 30000;
-            await session.page.waitForSelector(step.arguments.selector, { timeout });
-            stepResult = { appeared: step.arguments.selector };
-            break;
-          
-          case "screenshot":
-            const buffer = await session.page.screenshot();
-            const base64 = buffer.toString("base64");
-            stepResult = { screenshot: `${base64.substring(0, 50)}... (${base64.length} chars)` };
-            break;
-          
-          default:
-            throw new Error(`Unknown action: ${step.action}`);
-        }
+        // Execute the step based on action type with global timeout protection
+        const stepPromise = (async () => {
+          switch (step.action) {
+            case "open_page":
+              await session.page.goto(step.arguments.url, { 
+                waitUntil: "networkidle", 
+                timeout: 60000 
+              });
+              return { url: session.page.url(), title: await session.page.title() };
+            
+            case "click":
+              await session.page.click(step.arguments.selector, { timeout: GLOBAL_TIMEOUT });
+              return { clicked: step.arguments.selector };
+            
+            case "fill":
+              await session.page.fill(step.arguments.selector, step.arguments.text, { timeout: GLOBAL_TIMEOUT });
+              return { filled: step.arguments.selector, text: step.arguments.text };
+            
+            case "wait_for_selector":
+              const timeout = Math.min(step.arguments.timeout || 30000, GLOBAL_TIMEOUT);
+              await session.page.waitForSelector(step.arguments.selector, { timeout });
+              return { appeared: step.arguments.selector };
+            
+            case "wait_for_enabled":
+              const waitTimeout = Math.min(step.arguments.timeout || 30000, GLOBAL_TIMEOUT);
+              const selector = step.arguments.selector;
+              const checkInterval = 500;
+              const startTime = Date.now();
+              
+              while (Date.now() - startTime < waitTimeout) {
+                try {
+                  const isDisabled = await session.page.evaluate((sel: string) => {
+                    const elem = document.querySelector(sel);
+                    return (elem as HTMLElement)?.getAttribute('data-disabled') === 'true' || elem?.hasAttribute('disabled');
+                  }, selector);
+                  
+                  if (!isDisabled) {
+                    return { enabled: selector };
+                  }
+                } catch (evalError) {
+                  console.log(`[${sessionId}] Still waiting for element ${selector} to be available...`);
+                }
+                await new Promise(r => setTimeout(r, checkInterval));
+              }
+              throw new Error(`Element ${selector} did not become enabled within ${waitTimeout}ms`);
+            
+            case "screenshot":
+              const buffer = await session.page.screenshot();
+              const base64 = buffer.toString("base64");
+              return { screenshot: `${base64.substring(0, 50)}... (${base64.length} chars)` };
+            
+            default:
+              throw new Error(`Unknown action: ${step.action}`);
+          }
+        })();
+
+        // Wrap with timeout protection
+        stepResult = await Promise.race([
+          stepPromise,
+          new Promise((_, reject) => 
+            setTimeout(() => reject(new Error(`STEP TIMEOUT: Operation exceeded 30 seconds - ${step.action} on ${step.arguments.selector || 'N/A'}`)), GLOBAL_TIMEOUT)
+          )
+        ]);
+
+        const stepDuration = Date.now() - stepStartTime;
+        console.log(`[${sessionId}] Step ${i + 1} completed in ${stepDuration}ms`);
 
         results.push({
           step: i + 1,
           action: step.action,
           description: step.description,
           success: true,
-          result: stepResult
+          result: stepResult,
+          duration: stepDuration
         });
 
         // Wait after step if specified
@@ -394,17 +429,20 @@ export class ToolExecutor {
 
       } catch (error) {
         const errorMessage = error instanceof Error ? error.message : String(error);
-        console.error(`[${sessionId}] Step ${i + 1} failed: ${errorMessage}`);
+        const stepDuration = Date.now() - stepStartTime;
+        console.error(`[${sessionId}] Step ${i + 1} FAILED after ${stepDuration}ms: ${errorMessage}`);
         
         results.push({
           step: i + 1,
           action: step.action,
           description: step.description,
           success: false,
-          error: errorMessage
+          error: errorMessage,
+          duration: stepDuration
         });
 
-        throw new Error(`Workflow failed at step ${i + 1} (${step.description}): ${errorMessage}`);
+        // Stop workflow if step fails (GLOBAL CONDITION)
+        throw new Error(`WORKFLOW STOPPED: Step ${i + 1} (${step.description}) failed after ${stepDuration}ms - ${errorMessage}`);
       }
     }
 

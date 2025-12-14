@@ -62,16 +62,16 @@
     {
       "action": "click",
       "arguments": {
-        "selector": "button.ot-icon-button"
+        "selector": "#add-project"
       },
-      "description": "Click home button",
-      "waitAfter": 2000
+      "description": "Click add project button",
+      "waitAfter": 10000
     },
     {
       "action": "fill",
       "arguments": {
         "selector": "input[placeholder*='unique project reference']",
-        "text": "TEST-REF-{timestamp}"
+        "text": "TEST123"
       },
       "description": "Fill project reference code",
       "waitAfter": 500
@@ -80,7 +80,7 @@
       "action": "fill",
       "arguments": {
         "selector": "input[placeholder*='project name']",
-        "text": "Test Project {timestamp}"
+        "text": "Test Project"
       },
       "description": "Fill project name",
       "waitAfter": 500
@@ -100,6 +100,94 @@
       },
       "description": "Click Next button (2nd time)",
       "waitAfter": 2000
+    },
+    {
+      "action": "wait_for_selector",
+      "arguments": {
+        "selector": "input[placeholder='Enter name']",
+        "timeout": 30000
+      },
+      "description": "Wait for Enter name field",
+      "waitAfter": 500
+    },
+    {
+      "action": "fill",
+      "arguments": {
+        "selector": "input[placeholder='Enter name']",
+        "text": "Test Name"
+      },
+      "description": "Fill name field",
+      "waitAfter": 500
+    },
+    {
+      "action": "wait_for_selector",
+      "arguments": {
+        "selector": "input[placeholder='Enter an unique code']",
+        "timeout": 30000
+      },
+      "description": "Wait for unique code field",
+      "waitAfter": 500
+    },
+    {
+      "action": "fill",
+      "arguments": {
+        "selector": "input[placeholder='Enter an unique code']",
+        "text": "CODE123"
+      },
+      "description": "Fill unique code field",
+      "waitAfter": 500
+    },
+    {
+      "action": "wait_for_selector",
+      "arguments": {
+        "selector": "input[placeholder='Enter domain']",
+        "timeout": 30000
+      },
+      "description": "Wait for domain field",
+      "waitAfter": 500
+    },
+    {
+      "action": "fill",
+      "arguments": {
+        "selector": "input[placeholder='Enter domain']",
+        "text": "example.com"
+      },
+      "description": "Fill domain field",
+      "waitAfter": 1000
+    },
+    {
+      "action": "wait_for_enabled",
+      "arguments": {
+        "selector": ".dropdown-toggle",
+        "timeout": 30000
+      },
+      "description": "Wait for dropdown to be enabled",
+      "waitAfter": 500
+    },
+    {
+      "action": "click",
+      "arguments": {
+        "selector": ".dropdown-toggle"
+      },
+      "description": "Click dropdown button",
+      "waitAfter": 1000
+    },
+    {
+      "action": "wait_for_selector",
+      "arguments": {
+        "selector": ".dropdown-menu",
+        "timeout": 30000
+      },
+      "description": "Wait for dropdown menu to appear",
+      "waitAfter": 500
+    },
+    {
+      "action": "click",
+      "arguments": {
+        "selector": ".dropdown-menu a:has-text('Owner')"
+      },
+      "description": "Click Owner option from dropdown",
+      "waitAfter": 1000
     },
     {
       "action": "screenshot",

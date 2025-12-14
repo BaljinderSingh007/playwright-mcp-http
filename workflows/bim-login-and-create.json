@@ -130,14 +130,6 @@
     },
 
     {
-      "action": "wait_for_network",
-      "arguments": {
-        "url": "projectOptions.json",
-        "timeout": 60000
-      }
-    },
-
-    {
       "action": "wait_for_selector",
       "arguments": {
         "selector": "input[type='radio'][id='allow']",
@@ -156,14 +148,6 @@
       "action": "click",
       "arguments": {
         "selector": "#contractNext"
-      }
-    },
-
-    {
-      "action": "wait_for_network",
-      "arguments": {
-        "url": "organizationDetails.json",
-        "timeout": 60000
       }
     },
 

@@ -20,7 +20,7 @@
     {
   "action": "open_page",
   "arguments": {
-    "url": "https://bimgatewayservice-nitro.qe.bp-paas.otxlab.net/subscriptions/july1/home",
+    "url": "https://bimgatewayservice-nitro.qe.bp-paas.otxlab.net/subscriptions/CC4EAI/home",
     "waitUntil": "domcontentloaded",
     "timeout": 60000
   },
@@ -38,7 +38,7 @@
       "action": "fill",
       "arguments": {
         "selector": "#otds_username",
-        "text": "rsil@opentext.com"
+        "text": "baljinders@opentext.com"
       }
     },
     {
@@ -59,7 +59,7 @@
       "action": "fill",
       "arguments": {
         "selector": "#otds_password",
-        "text": "Infinity@12345"
+        "text": "Password@123"
       }
     },
     {

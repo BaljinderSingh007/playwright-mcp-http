@@ -21,8 +21,8 @@
   "action": "open_page",
   "arguments": {
     "url": "https://bimgatewayservice-nitro.qe.bp-paas.otxlab.net/subscriptions/july1/home",
-    "waitUntil": "domcontentloaded",
-    "timeout": 60000
+    "waitUntil": "networkidle",
+    "timeout": 30000
   },
   "description": "Open BIM Gateway home page"
 },
@@ -31,8 +31,10 @@
       "action": "wait_for_selector",
       "arguments": {
         "selector": "#otds_username",
-        "timeout": 60000
-      }
+        "timeout": 30000,
+        "state": "visible"
+      },
+      "description": "Wait for login form to be visible"
     },
     {
       "action": "fill",
